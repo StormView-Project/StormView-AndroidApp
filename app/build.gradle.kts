@@ -63,19 +63,14 @@ tasks.register("fetchAndBuildWebApp") {
             println("No VITE_ keys found in local.properties — skipping .env")
         }
 
-        // ---- 3. Patch vite.config.js ----
-        file("${webAppDir}/vite.config.js").writeText(
-            """
-            import { defineConfig } from 'vite'
-            import react from '@vitejs/plugin-react'
-
-            export default defineConfig({
-              plugins: [react()],
-              base: './',
-            })
-            """.trimIndent()
-        )
-        println("Patched vite.config.js")
+        // ---- 3. Remove stale patched vite.config.js ----
+        // The repo ships its own vite.config.ts; a leftover .js would shadow it.
+        // base './' (needed for file:// assets) is passed on the command line instead.
+        val staleViteConfig = file("${webAppDir}/vite.config.js")
+        if (staleViteConfig.exists()) {
+            staleViteConfig.delete()
+            println("Removed stale vite.config.js")
+        }
 
         // ---- 4. npm install + build ----
         val npmBin = listOf("/usr/local/bin/npm", "/usr/bin/npm", "npm")
@@ -85,7 +80,7 @@ tasks.register("fetchAndBuildWebApp") {
         println("Running npm install...")
         run(npmBin, "install")
         println("Running npm run build...")
-        run(npmBin, "run", "build")
+        run(npmBin, "run", "build", "--", "--base=./")
 
         // ---- 5. Sync dist/ → assets/www/ ----
         val distDir = file("${webAppDir}/dist")
