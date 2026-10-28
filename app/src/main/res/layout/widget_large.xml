@@ -1,541 +1,583 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/transparent"
+    android:background="@drawable/widget_bg"
+    android:clipToOutline="true"
     android:orientation="vertical"
-    android:padding="14dp"
-    android:gravity="center_horizontal">
+    android:padding="16dp">
 
-    <!-- Top: Current Conditions -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/widget_emoji"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="🌤"
-            android:textSize="44sp" />
-
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="10dp"
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/widget_temp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="--°F"
-                android:textColor="#FFFFFF"
-                android:textSize="38sp"
-                android:textStyle="bold" />
+        android:id="@+id/widget_temp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-medium"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:text="--°"
+        android:textColor="@color/widget_on_surface"
+        android:textSize="60sp"
+            android:letterSpacing="-0.03" />
 
             <TextView
-                android:id="@+id/widget_condition"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Loading..."
-                android:textColor="#DDDDDD"
-                android:textSize="13sp" />
+        android:id="@+id/widget_condition"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-medium"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:text="Loading…"
+        android:textColor="@color/widget_on_surface"
+        android:textSize="15sp"
+            android:layout_marginTop="6dp" />
 
+            <TextView
+        android:id="@+id/widget_hilo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:text="H --°  L --°"
+        android:textColor="@color/widget_on_surface_variant"
+        android:textSize="13sp"
+            android:layout_marginTop="2dp" />
         </LinearLayout>
 
+        <FrameLayout
+        android:layout_width="84dp"
+        android:layout_height="84dp">
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:importantForAccessibility="no"
+            android:src="@drawable/widget_cookie" />
+        <ImageView
+            android:id="@+id/widget_icon"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="16dp"
+            android:contentDescription="@null"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_w_partly_day" />
+    </FrameLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="horizontal">
+        <TextView
+        android:id="@+id/widget_feels_like"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-medium"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:text="Feels like --°"
+        android:textColor="@color/widget_on_surface_variant"
+        android:textSize="13sp"
+            android:layout_width="0dp"
+            android:layout_weight="1" />
+        <TextView
+        android:id="@+id/widget_updated"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:text="Updated --"
+        android:textColor="@color/widget_on_surface_variant"
+        android:textSize="12sp" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="10dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="-3dp"
+        android:orientation="horizontal">
+
         <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="end">
-
-            <TextView
-                android:id="@+id/widget_feels_like"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🌡️ Feels --°F"
-                android:textColor="#CCCCCC"
-                android:textSize="12sp" />
-
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="3dp"
+            android:background="@drawable/widget_chip_bg"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingHorizontal="8dp">
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_w_stat_wind" />
             <TextView
                 android:id="@+id/widget_wind"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="💨 -- mph"
-                android:textColor="#CCCCCC"
+                android:layout_marginStart="6dp"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="-- mph"
+                android:textColor="@color/widget_on_secondary_container"
                 android:textSize="12sp" />
+        </LinearLayout>
 
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="3dp"
+            android:background="@drawable/widget_chip_bg"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingHorizontal="8dp">
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_w_stat_humidity" />
             <TextView
                 android:id="@+id/widget_humidity"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="💧 --%"
-                android:textColor="#CCCCCC"
+                android:layout_marginStart="6dp"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="--%"
+                android:textColor="@color/widget_on_secondary_container"
                 android:textSize="12sp" />
+        </LinearLayout>
 
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="3dp"
+            android:background="@drawable/widget_chip_bg"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingHorizontal="8dp">
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_w_stat_uv" />
             <TextView
                 android:id="@+id/widget_uv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="☀️ UV --"
-                android:textColor="#CCCCCC"
+                android:layout_marginStart="6dp"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="UV --"
+                android:textColor="@color/widget_on_secondary_container"
                 android:textSize="12sp" />
+        </LinearLayout>
+    </LinearLayout>
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="12dp"
+        android:minHeight="120dp"
+        android:background="@drawable/widget_inner_bg"
+        android:orientation="horizontal"
+        android:padding="6dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="1dp"
+            android:background="@drawable/widget_today_bg"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:paddingVertical="8dp">
+            <TextView
+                android:id="@+id/day1_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="---"
+                android:textColor="@color/widget_on_primary_container"
+                android:textSize="12sp" />
+            <ImageView
+                android:id="@+id/day1_icon"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_marginVertical="6dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_w_cloudy" />
+            <TextView
+                android:id="@+id/day1_high"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="--°"
+                android:textColor="@color/widget_on_primary_container"
+                android:textSize="14sp" />
+            <TextView
+                android:id="@+id/day1_low"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:text="--°"
+                android:textColor="@color/widget_on_primary_container"
+                android:textSize="12sp" />
+            <TextView
+                android:id="@+id/day1_precip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="--%"
+                android:textColor="@color/widget_on_primary_container"
+                android:textSize="11sp" />
         </LinearLayout>
 
-    </LinearLayout>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginVertical="8dp"
-        android:background="#44FFFFFF" />
-
-    <!-- 7-Day Forecast Header -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="7-DAY FORECAST"
-        android:textColor="#88FFFFFF"
-        android:textSize="10sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="6dp" />
-
-    <!-- Day Row 1 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="3dp">
-
-        <TextView
-            android:id="@+id/day1_name"
+        <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="2"
-            android:text="Mon"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/day1_emoji"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="1"
+            android:layout_marginHorizontal="1dp"
             android:gravity="center"
-            android:text="🌤"
-            android:textSize="16sp" />
+            android:orientation="vertical"
+            android:paddingVertical="8dp">
+            <TextView
+                android:id="@+id/day2_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="---"
+                android:textColor="@color/widget_on_surface_variant"
+                android:textSize="12sp" />
+            <ImageView
+                android:id="@+id/day2_icon"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_marginVertical="6dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_w_cloudy" />
+            <TextView
+                android:id="@+id/day2_high"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="--°"
+                android:textColor="@color/widget_on_surface"
+                android:textSize="14sp" />
+            <TextView
+                android:id="@+id/day2_low"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:text="--°"
+                android:textColor="@color/widget_on_surface_variant"
+                android:textSize="12sp" />
+            <TextView
+                android:id="@+id/day2_precip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="--%"
+                android:textColor="@color/widget_primary"
+                android:textSize="11sp" />
+        </LinearLayout>
 
-        <TextView
-            android:id="@+id/day1_precip"
+        <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1.5"
-            android:gravity="center"
-            android:text="💧 --%"
-            android:textColor="#88CCFF"
-            android:textSize="11sp" />
-
-        <TextView
-            android:id="@+id/day1_high"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1.5"
-            android:gravity="end"
-            android:text="--°"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/day1_low"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1.5"
-            android:gravity="end"
-            android:text="--°"
-            android:textColor="#AAAAAA"
-            android:textSize="13sp" />
-
-    </LinearLayout>
-
-    <!-- Day Row 2 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="3dp">
-
-        <TextView
-            android:id="@+id/day2_name"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="2"
-            android:text="Tue"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/day2_emoji"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="1"
+            android:layout_marginHorizontal="1dp"
             android:gravity="center"
-            android:text="🌤"
-            android:textSize="16sp" />
+            android:orientation="vertical"
+            android:paddingVertical="8dp">
+            <TextView
+                android:id="@+id/day3_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="---"
+                android:textColor="@color/widget_on_surface_variant"
+                android:textSize="12sp" />
+            <ImageView
+                android:id="@+id/day3_icon"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_marginVertical="6dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_w_cloudy" />
+            <TextView
+                android:id="@+id/day3_high"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="--°"
+                android:textColor="@color/widget_on_surface"
+                android:textSize="14sp" />
+            <TextView
+                android:id="@+id/day3_low"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:text="--°"
+                android:textColor="@color/widget_on_surface_variant"
+                android:textSize="12sp" />
+            <TextView
+                android:id="@+id/day3_precip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="--%"
+                android:textColor="@color/widget_primary"
+                android:textSize="11sp" />
+        </LinearLayout>
 
-        <TextView
-            android:id="@+id/day2_precip"
+        <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1.5"
-            android:gravity="center"
-            android:text="💧 --%"
-            android:textColor="#88CCFF"
-            android:textSize="11sp" />
-
-        <TextView
-            android:id="@+id/day2_high"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1.5"
-            android:gravity="end"
-            android:text="--°"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/day2_low"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1.5"
-            android:gravity="end"
-            android:text="--°"
-            android:textColor="#AAAAAA"
-            android:textSize="13sp" />
-
-    </LinearLayout>
-
-    <!-- Day Row 3 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="3dp">
-
-        <TextView
-            android:id="@+id/day3_name"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="2"
-            android:text="Wed"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/day3_emoji"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="1"
+            android:layout_marginHorizontal="1dp"
             android:gravity="center"
-            android:text="🌤"
-            android:textSize="16sp" />
+            android:orientation="vertical"
+            android:paddingVertical="8dp">
+            <TextView
+                android:id="@+id/day4_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="---"
+                android:textColor="@color/widget_on_surface_variant"
+                android:textSize="12sp" />
+            <ImageView
+                android:id="@+id/day4_icon"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_marginVertical="6dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_w_cloudy" />
+            <TextView
+                android:id="@+id/day4_high"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="--°"
+                android:textColor="@color/widget_on_surface"
+                android:textSize="14sp" />
+            <TextView
+                android:id="@+id/day4_low"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:text="--°"
+                android:textColor="@color/widget_on_surface_variant"
+                android:textSize="12sp" />
+            <TextView
+                android:id="@+id/day4_precip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="--%"
+                android:textColor="@color/widget_primary"
+                android:textSize="11sp" />
+        </LinearLayout>
 
-        <TextView
-            android:id="@+id/day3_precip"
+        <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1.5"
-            android:gravity="center"
-            android:text="💧 --%"
-            android:textColor="#88CCFF"
-            android:textSize="11sp" />
-
-        <TextView
-            android:id="@+id/day3_high"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1.5"
-            android:gravity="end"
-            android:text="--°"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/day3_low"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1.5"
-            android:gravity="end"
-            android:text="--°"
-            android:textColor="#AAAAAA"
-            android:textSize="13sp" />
-
-    </LinearLayout>
-
-    <!-- Day Row 4 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="3dp">
-
-        <TextView
-            android:id="@+id/day4_name"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="2"
-            android:text="Thu"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/day4_emoji"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="1"
+            android:layout_marginHorizontal="1dp"
             android:gravity="center"
-            android:text="🌤"
-            android:textSize="16sp" />
+            android:orientation="vertical"
+            android:paddingVertical="8dp">
+            <TextView
+                android:id="@+id/day5_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="---"
+                android:textColor="@color/widget_on_surface_variant"
+                android:textSize="12sp" />
+            <ImageView
+                android:id="@+id/day5_icon"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_marginVertical="6dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_w_cloudy" />
+            <TextView
+                android:id="@+id/day5_high"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="--°"
+                android:textColor="@color/widget_on_surface"
+                android:textSize="14sp" />
+            <TextView
+                android:id="@+id/day5_low"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:text="--°"
+                android:textColor="@color/widget_on_surface_variant"
+                android:textSize="12sp" />
+            <TextView
+                android:id="@+id/day5_precip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="--%"
+                android:textColor="@color/widget_primary"
+                android:textSize="11sp" />
+        </LinearLayout>
 
-        <TextView
-            android:id="@+id/day4_precip"
+        <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1.5"
-            android:gravity="center"
-            android:text="💧 --%"
-            android:textColor="#88CCFF"
-            android:textSize="11sp" />
-
-        <TextView
-            android:id="@+id/day4_high"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1.5"
-            android:gravity="end"
-            android:text="--°"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/day4_low"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1.5"
-            android:gravity="end"
-            android:text="--°"
-            android:textColor="#AAAAAA"
-            android:textSize="13sp" />
-
-    </LinearLayout>
-
-    <!-- Day Row 5 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="3dp">
-
-        <TextView
-            android:id="@+id/day5_name"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="2"
-            android:text="Fri"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/day5_emoji"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="1"
+            android:layout_marginHorizontal="1dp"
             android:gravity="center"
-            android:text="🌤"
-            android:textSize="16sp" />
+            android:orientation="vertical"
+            android:paddingVertical="8dp">
+            <TextView
+                android:id="@+id/day6_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="---"
+                android:textColor="@color/widget_on_surface_variant"
+                android:textSize="12sp" />
+            <ImageView
+                android:id="@+id/day6_icon"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_marginVertical="6dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_w_cloudy" />
+            <TextView
+                android:id="@+id/day6_high"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="--°"
+                android:textColor="@color/widget_on_surface"
+                android:textSize="14sp" />
+            <TextView
+                android:id="@+id/day6_low"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:text="--°"
+                android:textColor="@color/widget_on_surface_variant"
+                android:textSize="12sp" />
+            <TextView
+                android:id="@+id/day6_precip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="--%"
+                android:textColor="@color/widget_primary"
+                android:textSize="11sp" />
+        </LinearLayout>
 
-        <TextView
-            android:id="@+id/day5_precip"
+        <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1.5"
-            android:gravity="center"
-            android:text="💧 --%"
-            android:textColor="#88CCFF"
-            android:textSize="11sp" />
-
-        <TextView
-            android:id="@+id/day5_high"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1.5"
-            android:gravity="end"
-            android:text="--°"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/day5_low"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1.5"
-            android:gravity="end"
-            android:text="--°"
-            android:textColor="#AAAAAA"
-            android:textSize="13sp" />
-
-    </LinearLayout>
-
-    <!-- Day Row 6 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="3dp">
-
-        <TextView
-            android:id="@+id/day6_name"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="2"
-            android:text="Sat"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/day6_emoji"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="1"
+            android:layout_marginHorizontal="1dp"
             android:gravity="center"
-            android:text="🌤"
-            android:textSize="16sp" />
-
-        <TextView
-            android:id="@+id/day6_precip"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1.5"
-            android:gravity="center"
-            android:text="💧 --%"
-            android:textColor="#88CCFF"
-            android:textSize="11sp" />
-
-        <TextView
-            android:id="@+id/day6_high"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1.5"
-            android:gravity="end"
-            android:text="--°"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/day6_low"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1.5"
-            android:gravity="end"
-            android:text="--°"
-            android:textColor="#AAAAAA"
-            android:textSize="13sp" />
-
+            android:orientation="vertical"
+            android:paddingVertical="8dp">
+            <TextView
+                android:id="@+id/day7_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="---"
+                android:textColor="@color/widget_on_surface_variant"
+                android:textSize="12sp" />
+            <ImageView
+                android:id="@+id/day7_icon"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_marginVertical="6dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_w_cloudy" />
+            <TextView
+                android:id="@+id/day7_high"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="--°"
+                android:textColor="@color/widget_on_surface"
+                android:textSize="14sp" />
+            <TextView
+                android:id="@+id/day7_low"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:text="--°"
+                android:textColor="@color/widget_on_surface_variant"
+                android:textSize="12sp" />
+            <TextView
+                android:id="@+id/day7_precip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="--%"
+                android:textColor="@color/widget_primary"
+                android:textSize="11sp" />
+        </LinearLayout>
     </LinearLayout>
-
-    <!-- Day Row 7 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
-
-        <TextView
-            android:id="@+id/day7_name"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="2"
-            android:text="Sun"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/day7_emoji"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="🌤"
-            android:textSize="16sp" />
-
-        <TextView
-            android:id="@+id/day7_precip"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1.5"
-            android:gravity="center"
-            android:text="💧 --%"
-            android:textColor="#88CCFF"
-            android:textSize="11sp" />
-
-        <TextView
-            android:id="@+id/day7_high"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1.5"
-            android:gravity="end"
-            android:text="--°"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/day7_low"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1.5"
-            android:gravity="end"
-            android:text="--°"
-            android:textColor="#AAAAAA"
-            android:textSize="13sp" />
-
-    </LinearLayout>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginVertical="8dp"
-        android:background="#44FFFFFF" />
-
-    <TextView
-        android:id="@+id/widget_updated"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Updated --:--"
-        android:textColor="#88FFFFFF"
-        android:textSize="10sp" />
-
 </LinearLayout>

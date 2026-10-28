@@ -1,8 +1,10 @@
 package com.example.stormview
 
+import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
+import android.content.Intent
 import android.location.Location
 import android.os.Handler
 import android.os.Looper
@@ -28,6 +30,16 @@ class WeatherWidget : AppWidgetProvider() {
     }
 
     companion object {
+        private val DAY_IDS = listOf(
+            intArrayOf(R.id.day1_name, R.id.day1_icon, R.id.day1_high, R.id.day1_low, R.id.day1_precip),
+            intArrayOf(R.id.day2_name, R.id.day2_icon, R.id.day2_high, R.id.day2_low, R.id.day2_precip),
+            intArrayOf(R.id.day3_name, R.id.day3_icon, R.id.day3_high, R.id.day3_low, R.id.day3_precip),
+            intArrayOf(R.id.day4_name, R.id.day4_icon, R.id.day4_high, R.id.day4_low, R.id.day4_precip),
+            intArrayOf(R.id.day5_name, R.id.day5_icon, R.id.day5_high, R.id.day5_low, R.id.day5_precip),
+            intArrayOf(R.id.day6_name, R.id.day6_icon, R.id.day6_high, R.id.day6_low, R.id.day6_precip),
+            intArrayOf(R.id.day7_name, R.id.day7_icon, R.id.day7_high, R.id.day7_low, R.id.day7_precip)
+        )
+
         fun updateWidget(
             context: Context,
             appWidgetManager: AppWidgetManager,
@@ -63,7 +75,7 @@ class WeatherWidget : AppWidgetProvider() {
                     val url = "https://api.open-meteo.com/v1/forecast" +
                             "?latitude=$lat&longitude=$lon" +
                             "&current=temperature_2m,relative_humidity_2m,apparent_temperature," +
-                            "weather_code,wind_speed_10m,uv_index" +
+                            "weather_code,wind_speed_10m,uv_index,is_day" +
                             "&daily=weather_code,temperature_2m_max,temperature_2m_min," +
                             "precipitation_probability_max" +
                             "&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=7"
@@ -79,8 +91,8 @@ class WeatherWidget : AppWidgetProvider() {
                     val windSpeed = current.getDouble("wind_speed_10m").roundToInt()
                     val weatherCode = current.getInt("weather_code")
                     val uvIndex = current.optDouble("uv_index", 0.0).roundToInt()
+                    val isDay = current.optInt("is_day", 1) == 1
 
-                    val emoji = getWeatherEmoji(weatherCode)
                     val condition = getWeatherCondition(weatherCode)
                     val timeStr = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date())
 
@@ -99,66 +111,44 @@ class WeatherWidget : AppWidgetProvider() {
                         if (i == 0) "Today"
                         else SimpleDateFormat("EEE", Locale.getDefault()).format(date!!)
                     }
+                    val todayHigh = highs.getDouble(0).roundToInt()
+                    val todayLow = lows.getDouble(0).roundToInt()
 
                     handler.post {
-                        val views = RemoteViews(context.packageName, layoutId)
+                        val views = baseViews(context, layoutId)
 
-                        // Small widget fields
-                        if (layoutId == R.layout.widget_small) {
-                            views.setTextViewText(R.id.widget_emoji, emoji)
-                            views.setTextViewText(R.id.widget_temp, "$temp°F")
-                            views.setTextViewText(R.id.widget_condition, condition)
-                            views.setTextViewText(R.id.widget_wind, "💨 $windSpeed mph")
-                            views.setTextViewText(R.id.widget_humidity, "💧 $humidity%")
+                        // Shared by every size
+                        views.setImageViewResource(R.id.widget_icon, getWeatherIcon(weatherCode, isDay))
+                        views.setContentDescription(R.id.widget_icon, condition)
+                        views.setTextViewText(R.id.widget_temp, "$temp°")
+                        views.setTextViewText(R.id.widget_condition, condition)
+                        views.setTextViewText(R.id.widget_hilo, "H $todayHigh°  L $todayLow°")
+
+                        // Medium and large: stat chips
+                        if (layoutId != R.layout.widget_small) {
+                            views.setTextViewText(R.id.widget_wind, "$windSpeed mph")
+                            views.setTextViewText(R.id.widget_humidity, "$humidity%")
+                            views.setTextViewText(R.id.widget_uv, "UV $uvIndex")
                         }
 
-                        // Medium widget fields
-                        if (layoutId == R.layout.widget_medium) {
-                            views.setTextViewText(R.id.widget_emoji, emoji)
-                            views.setTextViewText(R.id.widget_temp, "$temp°F")
-                            views.setTextViewText(R.id.widget_condition, condition)
-                            views.setTextViewText(R.id.widget_feels_like, "Feels like $feelsLike°F")
-                            views.setTextViewText(R.id.widget_wind, "💨 $windSpeed mph")
-                            views.setTextViewText(R.id.widget_humidity, "💧 $humidity%")
-                            views.setTextViewText(R.id.widget_uv, "☀️ UV $uvIndex")
-                            views.setTextViewText(R.id.widget_updated, "Updated $timeStr")
-                        }
-
-                        // Large widget fields - current + 7 day forecast
+                        // Large: feels like, updated time and 7-day forecast
                         if (layoutId == R.layout.widget_large) {
-                            views.setTextViewText(R.id.widget_emoji, emoji)
-                            views.setTextViewText(R.id.widget_temp, "$temp°F")
-                            views.setTextViewText(R.id.widget_condition, condition)
-                            views.setTextViewText(R.id.widget_feels_like, "🌡️ Feels $feelsLike°F")
-                            views.setTextViewText(R.id.widget_wind, "💨 $windSpeed mph")
-                            views.setTextViewText(R.id.widget_humidity, "💧 $humidity%")
-                            views.setTextViewText(R.id.widget_uv, "☀️ UV $uvIndex")
+                            views.setTextViewText(R.id.widget_feels_like, "Feels like $feelsLike°")
                             views.setTextViewText(R.id.widget_updated, "Updated $timeStr")
-
-                            // Forecast day IDs paired up
-                            val dayIds = listOf(
-                                Triple(R.id.day1_name, R.id.day1_emoji, Triple(R.id.day1_high, R.id.day1_low, R.id.day1_precip)),
-                                Triple(R.id.day2_name, R.id.day2_emoji, Triple(R.id.day2_high, R.id.day2_low, R.id.day2_precip)),
-                                Triple(R.id.day3_name, R.id.day3_emoji, Triple(R.id.day3_high, R.id.day3_low, R.id.day3_precip)),
-                                Triple(R.id.day4_name, R.id.day4_emoji, Triple(R.id.day4_high, R.id.day4_low, R.id.day4_precip)),
-                                Triple(R.id.day5_name, R.id.day5_emoji, Triple(R.id.day5_high, R.id.day5_low, R.id.day5_precip)),
-                                Triple(R.id.day6_name, R.id.day6_emoji, Triple(R.id.day6_high, R.id.day6_low, R.id.day6_precip)),
-                                Triple(R.id.day7_name, R.id.day7_emoji, Triple(R.id.day7_high, R.id.day7_low, R.id.day7_precip))
-                            )
 
                             for (i in 0 until 7) {
-                                val (nameId, emojiId, rest) = dayIds[i]
-                                val (highId, lowId, precipId) = rest
+                                val (nameId, iconId, highId, lowId, precipId) = DAY_IDS[i]
                                 val high = highs.getDouble(i).roundToInt()
                                 val low = lows.getDouble(i).roundToInt()
                                 val precip = precips.optInt(i, 0)
-                                val dayEmoji = getWeatherEmoji(codes.getInt(i))
+                                val dayCode = codes.getInt(i)
 
                                 views.setTextViewText(nameId, dayNames[i])
-                                views.setTextViewText(emojiId, dayEmoji)
+                                views.setImageViewResource(iconId, getWeatherIcon(dayCode, true))
+                                views.setContentDescription(iconId, getWeatherCondition(dayCode))
                                 views.setTextViewText(highId, "$high°")
                                 views.setTextViewText(lowId, "$low°")
-                                views.setTextViewText(precipId, "💧 $precip%")
+                                views.setTextViewText(precipId, "$precip%")
                             }
                         }
 
@@ -166,31 +156,40 @@ class WeatherWidget : AppWidgetProvider() {
                     }
                 } catch (e: Exception) {
                     handler.post {
-                        val views = RemoteViews(context.packageName, layoutId)
-                        views.setTextViewText(R.id.widget_temp, "⚠️")
+                        val views = baseViews(context, layoutId)
+                        views.setTextViewText(R.id.widget_temp, "--°")
+                        views.setTextViewText(R.id.widget_condition, "Can't load weather")
                         appWidgetManager.updateAppWidget(appWidgetId, views)
                     }
                 }
             }
         }
 
-        private fun getWeatherEmoji(code: Int): String {
+        // Tapping anywhere on the widget opens the app.
+        private fun baseViews(context: Context, layoutId: Int): RemoteViews {
+            val views = RemoteViews(context.packageName, layoutId)
+            val openApp = PendingIntent.getActivity(
+                context,
+                0,
+                Intent(context, MainActivity::class.java),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+            views.setOnClickPendingIntent(android.R.id.background, openApp)
+            return views
+        }
+
+        private fun getWeatherIcon(code: Int, isDay: Boolean): Int {
             return when (code) {
-                0 -> "☀️"
-                1 -> "🌤"
-                2 -> "⛅"
-                3 -> "☁️"
-                45, 48 -> "🌫️"
-                51, 53, 55 -> "🌦️"
-                61, 63, 65 -> "🌧️"
-                66, 67 -> "🌨️"
-                71, 73, 75 -> "❄️"
-                77 -> "🌨️"
-                80, 81, 82 -> "🌧️"
-                85, 86 -> "❄️"
-                95 -> "⛈️"
-                96, 99 -> "⛈️"
-                else -> "🌡️"
+                0 -> if (isDay) R.drawable.ic_w_clear_day else R.drawable.ic_w_clear_night
+                1, 2 -> if (isDay) R.drawable.ic_w_partly_day else R.drawable.ic_w_partly_night
+                3 -> R.drawable.ic_w_cloudy
+                45, 48 -> R.drawable.ic_w_fog
+                51, 53, 55 -> R.drawable.ic_w_drizzle
+                56, 57, 66, 67 -> R.drawable.ic_w_freezing_rain
+                61, 63, 65, 80, 81, 82 -> R.drawable.ic_w_rain
+                71, 73, 75, 77, 85, 86 -> R.drawable.ic_w_snow
+                95, 96, 99 -> R.drawable.ic_w_thunder
+                else -> R.drawable.ic_w_cloudy
             }
         }
 
@@ -202,6 +201,7 @@ class WeatherWidget : AppWidgetProvider() {
                 3 -> "Overcast"
                 45, 48 -> "Foggy"
                 51, 53, 55 -> "Drizzle"
+                56, 57 -> "Freezing Drizzle"
                 61, 63, 65 -> "Rain"
                 66, 67 -> "Freezing Rain"
                 71, 73, 75 -> "Snow"
