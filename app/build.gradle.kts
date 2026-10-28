@@ -117,6 +117,17 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Same MapTiler key the web app uses; the radar widget falls back to OSM tiles without it.
+        val localProps = Properties()
+        rootProject.file("local.properties").takeIf { it.exists() }
+            ?.inputStream()?.use { localProps.load(it) }
+        val mapTilerKey = localProps.getProperty("VITE_MAPTILER_KEY").orEmpty()
+        buildConfigField("String", "MAPTILER_KEY", "\"$mapTilerKey\"")
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {

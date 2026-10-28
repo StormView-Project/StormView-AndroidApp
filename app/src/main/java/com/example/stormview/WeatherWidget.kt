@@ -40,22 +40,55 @@ class WeatherWidget : AppWidgetProvider() {
             intArrayOf(R.id.day7_name, R.id.day7_icon, R.id.day7_high, R.id.day7_low, R.id.day7_precip)
         )
 
+        private const val PREFS = "widget_location"
+        private const val DEFAULT_LAT = 42.3356
+        private const val DEFAULT_LON = -88.2590
+
         fun updateWidget(
             context: Context,
             appWidgetManager: AppWidgetManager,
             appWidgetId: Int,
             layoutId: Int
         ) {
-            val fusedLocationClient =
-                LocationServices.getFusedLocationProviderClient(context)
-            try {
-                fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
-                    val lat = location?.latitude ?: 42.3356
-                    val lon = location?.longitude ?: -88.2590
-                    fetchAndUpdate(context, appWidgetManager, appWidgetId, layoutId, lat, lon)
+            withLocation(context) { lat, lon ->
+                fetchAndUpdate(context, appWidgetManager, appWidgetId, layoutId, lat, lon)
+            }
+        }
+
+        /** Remembers a location fix so widgets can use it while the app is in the background. */
+        fun saveLocation(context: Context, location: Location) {
+            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+                .putFloat("lat", location.latitude.toFloat())
+                .putFloat("lon", location.longitude.toFloat())
+                .apply()
+        }
+
+        /**
+         * Background widget updates usually can't get a fresh fix on Android 10+, so fall back to
+         * the location saved by the app, then to the default.
+         */
+        fun withLocation(context: Context, callback: (lat: Double, lon: Double) -> Unit) {
+            val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            val fallback = {
+                if (prefs.contains("lat")) {
+                    callback(prefs.getFloat("lat", 0f).toDouble(), prefs.getFloat("lon", 0f).toDouble())
+                } else {
+                    callback(DEFAULT_LAT, DEFAULT_LON)
                 }
+            }
+            try {
+                LocationServices.getFusedLocationProviderClient(context).lastLocation
+                    .addOnSuccessListener { location: Location? ->
+                        if (location != null) {
+                            saveLocation(context, location)
+                            callback(location.latitude, location.longitude)
+                        } else {
+                            fallback()
+                        }
+                    }
+                    .addOnFailureListener { fallback() }
             } catch (e: SecurityException) {
-                fetchAndUpdate(context, appWidgetManager, appWidgetId, layoutId, 42.3356, -88.2590)
+                fallback()
             }
         }
 
@@ -166,7 +199,7 @@ class WeatherWidget : AppWidgetProvider() {
         }
 
         // Tapping anywhere on the widget opens the app.
-        private fun baseViews(context: Context, layoutId: Int): RemoteViews {
+        fun baseViews(context: Context, layoutId: Int): RemoteViews {
             val views = RemoteViews(context.packageName, layoutId)
             val openApp = PendingIntent.getActivity(
                 context,

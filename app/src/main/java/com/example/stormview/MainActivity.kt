@@ -132,6 +132,12 @@ class MainActivity : AppCompatActivity() {
         requestStartupPermissions()
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Widgets can't reliably get a fix in the background, so hand them one while we're visible.
+        WeatherWidget.withLocation(this) { _, _ -> }
+    }
+
     private fun requestStartupPermissions() {
         val missing = mutableListOf<String>()
         if (ContextCompat.checkSelfPermission(
@@ -177,7 +183,10 @@ class MainActivity : AppCompatActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
-            LOCATION_PERMISSION_REQUEST -> loadPage()
+            LOCATION_PERMISSION_REQUEST -> {
+                WeatherWidget.withLocation(this) { _, _ -> }
+                loadPage()
+            }
             NOTIFICATION_PERMISSION_REQUEST -> webView.evaluateJavascript(
                 "window.__stormViewNotificationResult && window.__stormViewNotificationResult('${notificationPermissionState()}')",
                 null

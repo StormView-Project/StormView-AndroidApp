@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_inner_bg"
+    android:clipToOutline="true">
+
+    <ImageView
+        android:id="@+id/radar_map"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:contentDescription="Radar map around your location"
+        android:scaleType="centerCrop" />
+
+    <TextView
+        android:id="@+id/radar_status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:fontFamily="sans-serif-medium"
+        android:text="Loading radar…"
+        android:textColor="@color/widget_on_surface_variant"
+        android:textSize="14sp" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="32dp"
+        android:layout_gravity="top|start"
+        android:layout_margin="12dp"
+        android:background="@drawable/widget_chip_bg"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="8dp"
+        android:paddingEnd="12dp">
+
+        <ImageView
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:importantForAccessibility="no"
+            android:src="@drawable/ic_w_place" />
+
+        <TextView
+            android:id="@+id/radar_place"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:maxWidth="200dp"
+            android:text="My Location"
+            android:textColor="@color/widget_on_secondary_container"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/radar_time"
+        android:layout_width="wrap_content"
+        android:layout_height="28dp"
+        android:layout_gravity="bottom|start"
+        android:layout_margin="12dp"
+        android:background="@drawable/widget_scrim_chip_bg"
+        android:fontFamily="sans-serif-medium"
+        android:gravity="center"
+        android:paddingHorizontal="10dp"
+        android:text="Radar · --"
+        android:textColor="@color/widget_on_surface"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/radar_attribution"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="14dp"
+        android:layout_marginBottom="6dp"
+        android:alpha="0.8"
+        android:text="© OpenStreetMap · LibreWXR"
+        android:textColor="@color/widget_on_surface_variant"
+        android:textSize="8sp" />
+</FrameLayout>
