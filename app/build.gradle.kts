@@ -8,7 +8,7 @@ tasks.register("fetchAndBuildWebApp") {
     description = "Clones/updates the weather web app repo and builds it into assets/www"
     group = "build"
 
-    val repoUrl = "https://github.com/arc360alt/StormView-Rewrite.git"
+    val repoUrl = "https://github.com/StormView-Project/SkyView.git"
     val webAppDir = file("${rootProject.projectDir}/web-app-source")
     val assetsWwwDir = file("${projectDir}/src/main/assets/www")
     val isWindows = System.getProperty("os.name").lowercase().contains("windows")
