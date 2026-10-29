@@ -11,8 +11,6 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.View
 import android.widget.RemoteViews
 import androidx.core.content.ContextCompat
@@ -38,9 +36,7 @@ class RadarWidget : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
-        for (appWidgetId in appWidgetIds) {
-            updateWidget(context, appWidgetManager, appWidgetId)
-        }
+        WidgetUpdateWorker.refreshNow(context)
     }
 
     // Re-render at the new aspect ratio when the widget is resized.
@@ -50,7 +46,7 @@ class RadarWidget : AppWidgetProvider() {
         appWidgetId: Int,
         newOptions: Bundle
     ) {
-        updateWidget(context, appWidgetManager, appWidgetId)
+        WidgetUpdateWorker.refreshNow(context)
     }
 
     companion object {
@@ -69,83 +65,61 @@ class RadarWidget : AppWidgetProvider() {
 
         private val tilePool = Executors.newFixedThreadPool(6)
 
-        fun updateWidget(
+        /** Renders one radar widget; blocks on the network, so call it off the main thread. */
+        fun update(
             context: Context,
             appWidgetManager: AppWidgetManager,
-            appWidgetId: Int
+            appWidgetId: Int,
+            lat: Double,
+            lon: Double
         ) {
             val options = appWidgetManager.getAppWidgetOptions(appWidgetId)
             // Portrait home screens use min width x max height.
             val widthDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH).takeIf { it > 0 } ?: 320
             val heightDp = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT).takeIf { it > 0 } ?: 180
 
-            WeatherWidget.withLocation(context) { lat, lon ->
-                render(context, appWidgetManager, appWidgetId, lat, lon, widthDp, heightDp)
-            }
-        }
+            try {
+                val isDark = (context.resources.configuration.uiMode and
+                        Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
 
-        private fun render(
-            context: Context,
-            appWidgetManager: AppWidgetManager,
-            appWidgetId: Int,
-            lat: Double,
-            lon: Double,
-            widthDp: Int,
-            heightDp: Int
-        ) {
-            val executor = Executors.newSingleThreadExecutor()
-            val handler = Handler(Looper.getMainLooper())
+                // Latest observed radar frame (LibreWXR mirrors the RainViewer v2 API).
+                val frames = JSONObject(fetchText(LIBREWXR_API))
+                    .getJSONObject("radar").getJSONArray("past")
+                val frame = frames.getJSONObject(frames.length() - 1)
+                val frameTime = frame.getLong("time")
+                val radar = TileLayer(
+                    "$LIBREWXR_HOST${frame.getString("path")}/$TILE/{z}/{x}/{y}/$RADAR_SCHEME/1_1.png",
+                    ZOOM, TILE
+                )
+                val key = BuildConfig.MAPTILER_KEY
+                // OSM's 256px tiles one zoom level deeper cover the same area as 512px ones at ZOOM.
+                val base = if (key.isNotEmpty()) TileLayer(
+                    "https://api.maptiler.com/maps/${if (isDark) "dataviz-dark" else "dataviz"}/256/{z}/{x}/{y}@2x.png?key=$key",
+                    ZOOM, TILE
+                ) else TileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", ZOOM + 1, TILE / 2)
+                val attribution =
+                    if (key.isNotEmpty()) "© MapTiler © OpenStreetMap · LibreWXR"
+                    else "© OpenStreetMap · LibreWXR"
 
-            executor.execute {
-                try {
-                    val isDark = (context.resources.configuration.uiMode and
-                            Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+                val width = (widthDp * PX_PER_DP).coerceIn(64, MAX_SIDE)
+                val height = (heightDp * PX_PER_DP).coerceIn(64, MAX_SIDE)
+                val bitmap = drawMap(context, lat, lon, width, height, base, radar)
 
-                    // Latest observed radar frame (LibreWXR mirrors the RainViewer v2 API).
-                    val frames = JSONObject(fetchText(LIBREWXR_API))
-                        .getJSONObject("radar").getJSONArray("past")
-                    val frame = frames.getJSONObject(frames.length() - 1)
-                    val frameTime = frame.getLong("time")
-                    val radar = TileLayer(
-                        "$LIBREWXR_HOST${frame.getString("path")}/$TILE/{z}/{x}/{y}/$RADAR_SCHEME/1_1.png",
-                        ZOOM, TILE
-                    )
-                    val key = BuildConfig.MAPTILER_KEY
-                    // OSM's 256px tiles one zoom level deeper cover the same area as 512px ones at ZOOM.
-                    val base = if (key.isNotEmpty()) TileLayer(
-                        "https://api.maptiler.com/maps/${if (isDark) "dataviz-dark" else "dataviz"}/256/{z}/{x}/{y}@2x.png?key=$key",
-                        ZOOM, TILE
-                    ) else TileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", ZOOM + 1, TILE / 2)
-                    val attribution =
-                        if (key.isNotEmpty()) "© MapTiler © OpenStreetMap · LibreWXR"
-                        else "© OpenStreetMap · LibreWXR"
+                val place = placeName(context, lat, lon)
+                val timeStr = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(frameTime * 1000))
 
-                    val width = (widthDp * PX_PER_DP).coerceIn(64, MAX_SIDE)
-                    val height = (heightDp * PX_PER_DP).coerceIn(64, MAX_SIDE)
-                    val bitmap = drawMap(context, lat, lon, width, height, base, radar)
-
-                    val place = placeName(context, lat, lon)
-                    val timeStr = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(frameTime * 1000))
-
-                    handler.post {
-                        val views = WeatherWidget.baseViews(context, R.layout.widget_radar)
-                        views.setImageViewBitmap(R.id.radar_map, bitmap)
-                        views.setViewVisibility(R.id.radar_status, View.GONE)
-                        views.setTextViewText(R.id.radar_place, place)
-                        views.setTextViewText(R.id.radar_time, "Radar · $timeStr")
-                        views.setTextViewText(R.id.radar_attribution, attribution)
-                        appWidgetManager.updateAppWidget(appWidgetId, views)
-                    }
-                } catch (e: Exception) {
-                    handler.post {
-                        val views = WeatherWidget.baseViews(context, R.layout.widget_radar)
-                        views.setViewVisibility(R.id.radar_status, View.VISIBLE)
-                        views.setTextViewText(R.id.radar_status, "Can't load radar")
-                        appWidgetManager.updateAppWidget(appWidgetId, views)
-                    }
-                } finally {
-                    executor.shutdown()
-                }
+                val views = WeatherWidget.baseViews(context, R.layout.widget_radar)
+                views.setImageViewBitmap(R.id.radar_map, bitmap)
+                views.setViewVisibility(R.id.radar_status, View.GONE)
+                views.setTextViewText(R.id.radar_place, place)
+                views.setTextViewText(R.id.radar_time, "Radar · $timeStr")
+                views.setTextViewText(R.id.radar_attribution, attribution)
+                appWidgetManager.updateAppWidget(appWidgetId, views)
+            } catch (e: Exception) {
+                // Keep the last map on screen; only flag that this refresh failed.
+                val views = RemoteViews(context.packageName, R.layout.widget_radar)
+                views.setTextViewText(R.id.radar_status, "Can't load radar")
+                appWidgetManager.partiallyUpdateAppWidget(appWidgetId, views)
             }
         }
 

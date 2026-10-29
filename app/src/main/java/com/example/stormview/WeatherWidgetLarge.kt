@@ -10,8 +10,6 @@ class WeatherWidgetLarge : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
-        for (id in appWidgetIds) {
-            WeatherWidget.updateWidget(context, appWidgetManager, id, R.layout.widget_large)
-        }
+        WidgetUpdateWorker.refreshNow(context)
     }
 }

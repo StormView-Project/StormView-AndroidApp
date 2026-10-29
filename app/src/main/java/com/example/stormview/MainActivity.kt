@@ -135,7 +135,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         // Widgets can't reliably get a fix in the background, so hand them one while we're visible.
-        WeatherWidget.withLocation(this) { _, _ -> }
+        WeatherWidget.saveCurrentLocation(this) { WidgetUpdateWorker.refreshNow(this) }
     }
 
     private fun requestStartupPermissions() {
@@ -184,7 +184,7 @@ class MainActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
             LOCATION_PERMISSION_REQUEST -> {
-                WeatherWidget.withLocation(this) { _, _ -> }
+                WeatherWidget.saveCurrentLocation(this) { WidgetUpdateWorker.refreshNow(this) }
                 loadPage()
             }
             NOTIFICATION_PERMISSION_REQUEST -> webView.evaluateJavascript(

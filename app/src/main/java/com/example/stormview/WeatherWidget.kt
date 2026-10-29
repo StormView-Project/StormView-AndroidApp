@@ -6,16 +6,15 @@ import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
 import android.location.Location
-import android.os.Handler
-import android.os.Looper
 import android.widget.RemoteViews
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.tasks.Tasks
 import org.json.JSONObject
 import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
 class WeatherWidget : AppWidgetProvider() {
@@ -24,9 +23,7 @@ class WeatherWidget : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
-        for (appWidgetId in appWidgetIds) {
-            updateWidget(context, appWidgetManager, appWidgetId, R.layout.widget_small)
-        }
+        WidgetUpdateWorker.refreshNow(context)
     }
 
     companion object {
@@ -44,17 +41,6 @@ class WeatherWidget : AppWidgetProvider() {
         private const val DEFAULT_LAT = 42.3356
         private const val DEFAULT_LON = -88.2590
 
-        fun updateWidget(
-            context: Context,
-            appWidgetManager: AppWidgetManager,
-            appWidgetId: Int,
-            layoutId: Int
-        ) {
-            withLocation(context) { lat, lon ->
-                fetchAndUpdate(context, appWidgetManager, appWidgetId, layoutId, lat, lon)
-            }
-        }
-
         /** Remembers a location fix so widgets can use it while the app is in the background. */
         fun saveLocation(context: Context, location: Location) {
             context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
@@ -63,139 +49,142 @@ class WeatherWidget : AppWidgetProvider() {
                 .apply()
         }
 
-        /**
-         * Background widget updates usually can't get a fresh fix on Android 10+, so fall back to
-         * the location saved by the app, then to the default.
-         */
-        fun withLocation(context: Context, callback: (lat: Double, lon: Double) -> Unit) {
-            val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            val fallback = {
-                if (prefs.contains("lat")) {
-                    callback(prefs.getFloat("lat", 0f).toDouble(), prefs.getFloat("lon", 0f).toDouble())
-                } else {
-                    callback(DEFAULT_LAT, DEFAULT_LON)
-                }
-            }
+        /** Saves the current fix (if any) while the app is in the foreground, then runs [then]. */
+        fun saveCurrentLocation(context: Context, then: () -> Unit) {
             try {
                 LocationServices.getFusedLocationProviderClient(context).lastLocation
                     .addOnSuccessListener { location: Location? ->
-                        if (location != null) {
-                            saveLocation(context, location)
-                            callback(location.latitude, location.longitude)
-                        } else {
-                            fallback()
-                        }
+                        location?.let { saveLocation(context, it) }
+                        then()
                     }
-                    .addOnFailureListener { fallback() }
+                    .addOnFailureListener { then() }
             } catch (e: SecurityException) {
-                fallback()
+                then()
             }
         }
 
-        private fun fetchAndUpdate(
+        /**
+         * Blocking location lookup for background refreshes. Those usually can't get a fresh fix on
+         * Android 10+, so fall back to the location saved by the app, then to the default.
+         */
+        fun currentLocation(context: Context): Pair<Double, Double> {
+            try {
+                val location = Tasks.await(
+                    LocationServices.getFusedLocationProviderClient(context).lastLocation,
+                    5, TimeUnit.SECONDS
+                )
+                if (location != null) {
+                    saveLocation(context, location)
+                    return location.latitude to location.longitude
+                }
+            } catch (e: Exception) {
+                // No permission, timeout or no fix: use the saved location.
+            }
+            val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            return if (prefs.contains("lat")) {
+                prefs.getFloat("lat", 0f).toDouble() to prefs.getFloat("lon", 0f).toDouble()
+            } else {
+                DEFAULT_LAT to DEFAULT_LON
+            }
+        }
+
+        /** Current conditions + 7-day forecast from Open-Meteo. Blocks on the network. */
+        fun fetchForecast(lat: Double, lon: Double): JSONObject {
+            val url = "https://api.open-meteo.com/v1/forecast" +
+                    "?latitude=$lat&longitude=$lon" +
+                    "&current=temperature_2m,relative_humidity_2m,apparent_temperature," +
+                    "weather_code,wind_speed_10m,uv_index,is_day" +
+                    "&daily=weather_code,temperature_2m_max,temperature_2m_min," +
+                    "precipitation_probability_max" +
+                    "&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=7"
+            return JSONObject(URL(url).readText())
+        }
+
+        /** Fills one weather widget from a [fetchForecast] response. */
+        fun render(
             context: Context,
             appWidgetManager: AppWidgetManager,
             appWidgetId: Int,
             layoutId: Int,
-            lat: Double,
-            lon: Double
+            json: JSONObject
         ) {
-            val executor = Executors.newSingleThreadExecutor()
-            val handler = Handler(Looper.getMainLooper())
+            val current = json.getJSONObject("current")
+            val daily = json.getJSONObject("daily")
 
-            executor.execute {
-                try {
-                    val url = "https://api.open-meteo.com/v1/forecast" +
-                            "?latitude=$lat&longitude=$lon" +
-                            "&current=temperature_2m,relative_humidity_2m,apparent_temperature," +
-                            "weather_code,wind_speed_10m,uv_index,is_day" +
-                            "&daily=weather_code,temperature_2m_max,temperature_2m_min," +
-                            "precipitation_probability_max" +
-                            "&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=7"
+            val temp = current.getDouble("temperature_2m").roundToInt()
+            val feelsLike = current.getDouble("apparent_temperature").roundToInt()
+            val humidity = current.getInt("relative_humidity_2m")
+            val windSpeed = current.getDouble("wind_speed_10m").roundToInt()
+            val weatherCode = current.getInt("weather_code")
+            val uvIndex = current.optDouble("uv_index", 0.0).roundToInt()
+            val isDay = current.optInt("is_day", 1) == 1
 
-                    val response = URL(url).readText()
-                    val json = JSONObject(response)
-                    val current = json.getJSONObject("current")
-                    val daily = json.getJSONObject("daily")
+            val condition = getWeatherCondition(weatherCode)
+            val timeStr = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date())
 
-                    val temp = current.getDouble("temperature_2m").roundToInt()
-                    val feelsLike = current.getDouble("apparent_temperature").roundToInt()
-                    val humidity = current.getInt("relative_humidity_2m")
-                    val windSpeed = current.getDouble("wind_speed_10m").roundToInt()
-                    val weatherCode = current.getInt("weather_code")
-                    val uvIndex = current.optDouble("uv_index", 0.0).roundToInt()
-                    val isDay = current.optInt("is_day", 1) == 1
+            // Parse 7-day forecast arrays
+            val dates = daily.getJSONArray("time")
+            val codes = daily.getJSONArray("weather_code")
+            val highs = daily.getJSONArray("temperature_2m_max")
+            val lows = daily.getJSONArray("temperature_2m_min")
+            val precips = daily.getJSONArray("precipitation_probability_max")
 
-                    val condition = getWeatherCondition(weatherCode)
-                    val timeStr = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date())
+            // Build day name from date string e.g. "2026-02-20"
+            val dayNames = (0 until 7).map { i ->
+                val dateStr = dates.getString(i)
+                val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                val date = sdf.parse(dateStr)
+                if (i == 0) "Today"
+                else SimpleDateFormat("EEE", Locale.getDefault()).format(date!!)
+            }
+            val todayHigh = highs.getDouble(0).roundToInt()
+            val todayLow = lows.getDouble(0).roundToInt()
 
-                    // Parse 7-day forecast arrays
-                    val dates = daily.getJSONArray("time")
-                    val codes = daily.getJSONArray("weather_code")
-                    val highs = daily.getJSONArray("temperature_2m_max")
-                    val lows = daily.getJSONArray("temperature_2m_min")
-                    val precips = daily.getJSONArray("precipitation_probability_max")
+            val views = baseViews(context, layoutId)
 
-                    // Build day name from date string e.g. "2026-02-20"
-                    val dayNames = (0 until 7).map { i ->
-                        val dateStr = dates.getString(i)
-                        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                        val date = sdf.parse(dateStr)
-                        if (i == 0) "Today"
-                        else SimpleDateFormat("EEE", Locale.getDefault()).format(date!!)
-                    }
-                    val todayHigh = highs.getDouble(0).roundToInt()
-                    val todayLow = lows.getDouble(0).roundToInt()
+            // Shared by every size
+            views.setImageViewResource(R.id.widget_icon, getWeatherIcon(weatherCode, isDay))
+            views.setContentDescription(R.id.widget_icon, condition)
+            views.setTextViewText(R.id.widget_temp, "$temp°")
+            views.setTextViewText(R.id.widget_condition, condition)
+            views.setTextViewText(R.id.widget_hilo, "H $todayHigh°  L $todayLow°")
 
-                    handler.post {
-                        val views = baseViews(context, layoutId)
+            // Medium and large: stat chips
+            if (layoutId != R.layout.widget_small) {
+                views.setTextViewText(R.id.widget_wind, "$windSpeed mph")
+                views.setTextViewText(R.id.widget_humidity, "$humidity%")
+                views.setTextViewText(R.id.widget_uv, "UV $uvIndex")
+            }
 
-                        // Shared by every size
-                        views.setImageViewResource(R.id.widget_icon, getWeatherIcon(weatherCode, isDay))
-                        views.setContentDescription(R.id.widget_icon, condition)
-                        views.setTextViewText(R.id.widget_temp, "$temp°")
-                        views.setTextViewText(R.id.widget_condition, condition)
-                        views.setTextViewText(R.id.widget_hilo, "H $todayHigh°  L $todayLow°")
+            // Large: feels like, updated time and 7-day forecast
+            if (layoutId == R.layout.widget_large) {
+                views.setTextViewText(R.id.widget_feels_like, "Feels like $feelsLike°")
+                views.setTextViewText(R.id.widget_updated, "Updated $timeStr")
 
-                        // Medium and large: stat chips
-                        if (layoutId != R.layout.widget_small) {
-                            views.setTextViewText(R.id.widget_wind, "$windSpeed mph")
-                            views.setTextViewText(R.id.widget_humidity, "$humidity%")
-                            views.setTextViewText(R.id.widget_uv, "UV $uvIndex")
-                        }
+                for (i in 0 until 7) {
+                    val (nameId, iconId, highId, lowId, precipId) = DAY_IDS[i]
+                    val high = highs.getDouble(i).roundToInt()
+                    val low = lows.getDouble(i).roundToInt()
+                    val precip = precips.optInt(i, 0)
+                    val dayCode = codes.getInt(i)
 
-                        // Large: feels like, updated time and 7-day forecast
-                        if (layoutId == R.layout.widget_large) {
-                            views.setTextViewText(R.id.widget_feels_like, "Feels like $feelsLike°")
-                            views.setTextViewText(R.id.widget_updated, "Updated $timeStr")
-
-                            for (i in 0 until 7) {
-                                val (nameId, iconId, highId, lowId, precipId) = DAY_IDS[i]
-                                val high = highs.getDouble(i).roundToInt()
-                                val low = lows.getDouble(i).roundToInt()
-                                val precip = precips.optInt(i, 0)
-                                val dayCode = codes.getInt(i)
-
-                                views.setTextViewText(nameId, dayNames[i])
-                                views.setImageViewResource(iconId, getWeatherIcon(dayCode, true))
-                                views.setContentDescription(iconId, getWeatherCondition(dayCode))
-                                views.setTextViewText(highId, "$high°")
-                                views.setTextViewText(lowId, "$low°")
-                                views.setTextViewText(precipId, "$precip%")
-                            }
-                        }
-
-                        appWidgetManager.updateAppWidget(appWidgetId, views)
-                    }
-                } catch (e: Exception) {
-                    handler.post {
-                        val views = baseViews(context, layoutId)
-                        views.setTextViewText(R.id.widget_temp, "--°")
-                        views.setTextViewText(R.id.widget_condition, "Can't load weather")
-                        appWidgetManager.updateAppWidget(appWidgetId, views)
-                    }
+                    views.setTextViewText(nameId, dayNames[i])
+                    views.setImageViewResource(iconId, getWeatherIcon(dayCode, true))
+                    views.setContentDescription(iconId, getWeatherCondition(dayCode))
+                    views.setTextViewText(highId, "$high°")
+                    views.setTextViewText(lowId, "$low°")
+                    views.setTextViewText(precipId, "$precip%")
                 }
             }
+
+            appWidgetManager.updateAppWidget(appWidgetId, views)
+        }
+
+        /** Flags a failed refresh without wiping the last good data off the widget. */
+        fun renderError(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int, layoutId: Int) {
+            val views = RemoteViews(context.packageName, layoutId)
+            views.setTextViewText(R.id.widget_condition, "Can't load weather")
+            appWidgetManager.partiallyUpdateAppWidget(appWidgetId, views)
         }
 
         // Tapping anywhere on the widget opens the app.
